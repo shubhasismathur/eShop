@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Tasks template for modernization plan. Generate this file alongside plan.md to track individual migration tasks.",
+  "tasks": [
+    {
+      "type": "transform",
+      "id": "001-transform-redis-to-azure-cache",
+      "description": "Migrate Basket.API from local Redis to Azure Cache for Redis for distributed basket storage",
+      "reason": "The Basket.API currently uses a locally containerized Redis instance for distributed caching of shopping basket data. Migrating to Azure Cache for Redis provides a fully managed, highly available, and scalable caching service with enterprise-grade security.",
+      "requirements": "Migrate the Basket.API distributed cache from local Redis to Azure Cache for Redis using Managed Identity (passwordless) authentication. Ensure all basket read/write operations continue to function correctly after migration. Remove dependency on locally hosted Redis container.",
+      "skills": [
+        {
+          "name": "migration-azure-redis-cache",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "002-transform-postgresql-to-azure-db",
+      "description": "Migrate all PostgreSQL databases (Catalog, Identity, Ordering, Webhooks) to Azure Database for PostgreSQL Flexible Server",
+      "reason": "The application currently relies on locally containerized PostgreSQL instances for the Catalog, Identity, Ordering, and Webhooks APIs. Migrating to Azure Database for PostgreSQL provides a fully managed relational database service with built-in high availability, automated backups, and enhanced security through Managed Identity authentication.",
+      "requirements": "Migrate all PostgreSQL database connections in Catalog.API, Identity.API, Ordering.API, OrderProcessor, and Webhooks.API to Azure Database for PostgreSQL Flexible Server using Managed Identity (passwordless) authentication. Maintain all existing Entity Framework Core migrations and data access patterns. Remove dependency on locally hosted PostgreSQL containers.",
+      "skills": [
+        {
+          "name": "migration-azure-database-postgresql",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "003-transform-rabbitmq-to-servicebus",
+      "description": "Migrate event bus from local RabbitMQ to Azure Service Bus across all microservices",
+      "reason": "The eShop integration event bus is currently implemented using a locally containerized RabbitMQ broker via the EventBusRabbitMQ library. Migrating to Azure Service Bus provides a fully managed, enterprise-grade messaging platform with enhanced reliability, dead-letter queues, and Managed Identity authentication support.",
+      "requirements": "Migrate the EventBusRabbitMQ integration event bus to Azure Service Bus with Managed Identity (passwordless) authentication. All services that publish or subscribe to integration events (Basket.API, Catalog.API, Ordering.API, OrderProcessor, PaymentProcessor, Webhooks.API, WebApp) must be updated. Preserve all existing event handler registrations and event routing logic. Remove dependency on locally hosted RabbitMQ container.",
+      "skills": [
+        {
+          "name": "migration-azure-servicebus",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "security",
+      "id": "004-security-cve-remediation",
+      "description": "Scan all project dependencies for known CVEs and remediate identified vulnerabilities",
+      "reason": "Before deploying the modernized eShop to Azure, all known security vulnerabilities in NuGet package dependencies must be identified and remediated to ensure the application meets security and compliance requirements.",
+      "requirements": "Upgrade vulnerable dependencies to the minimum patched version. If a CVE fix requires a major version upgrade, document the affected dependency, the current version, the upgraded major version, and the breaking change risk. Verify that the project builds and all tests pass after remediation.",
+      "dependencies": [
+        "001-transform-redis-to-azure-cache",
+        "002-transform-postgresql-to-azure-db",
+        "003-transform-rabbitmq-to-servicebus"
+      ],
+      "skills": [
+        {
+          "name": "validate-cves-and-fix",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "deployment",
+      "id": "005-deployment-azure-container-apps",
+      "description": "Containerize and deploy all eShop microservices to Azure Container Apps",
+      "reason": "After completing all service migrations and security remediation, all eShop microservices must be containerized and deployed to Azure Container Apps to provide a serverless, fully managed hosting environment with automatic scaling and built-in Azure integration.",
+      "requirements": "Generate Dockerfiles for all deployable microservices (Basket.API, Catalog.API, Identity.API, Ordering.API, OrderProcessor, PaymentProcessor, Webhooks.API, WebApp, WebhookClient). Deploy all services to Azure Container Apps using Bicep for infrastructure provisioning. Configure Managed Identity for all Azure service connections established in previous migration tasks.",
+      "dependencies": [
+        "004-security-cve-remediation"
+      ],
+      "targetAzureService": "Azure Container Apps",
+      "resourceStatus": "Create new service",
+      "deploymentTool": "bicep",
+      "skills": [
+        {
+          "name": "azcli-containerapp-deploy",
+          "location": "builtin"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "planName": "modernizationplan-latest",
+    "projectName": "eShop",
+    "language": "dotnet",
+    "createdAt": "2026-06-17T17:34:00Z",
+    "version": "1.0"
+  }
+}
