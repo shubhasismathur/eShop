@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Tasks template for modernization plan. Generate this file alongside plan.md to track individual migration tasks.",
+  "tasks": [
+    {
+      "type": "transform",
+      "id": "001-transform-cache-azure-redis",
+      "description": "Modernize Basket.API caching for Azure-hosted Redis. Addresses issues: Data caching is detected, Connection string is detected.",
+      "reason": "Basket.API persists baskets in Redis and currently relies on local cache connectivity assumptions that must be replaced for Azure-hosted operation.",
+      "requirements": "Migrate Basket.API basket caching from local Redis assumptions to Azure Cache for Redis, preserve existing basket CRUD behavior and basket serialization, and replace the local Redis connection-string dependency with Azure-compatible authentication and configuration.",
+      "skills": [
+        {
+          "name": "migration-azure-redis-cache",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "002-transform-appconfig-externalization",
+      "description": "Externalize Basket.API runtime configuration for Azure. Addresses issues: Local application configuration detected, Environment variables dependency detected.",
+      "reason": "Basket.API currently depends on local appsettings and launch-profile environment values that are not suitable as the primary configuration source in Azure.",
+      "requirements": "Move non-secret Basket.API settings from local appsettings files to Azure App Configuration while preserving the current IConfiguration and options binding shape, and define how Azure-hosted execution will supply the launch-profile environment settings that are currently required for local development.",
+      "skills": [
+        {
+          "name": "migration-local-appsettings-azure-app-configuration",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "security",
+      "id": "003-security-cve-remediation",
+      "description": "Scan and remediate dependency CVEs before Azure rollout.",
+      "reason": "Every modernization plan must validate project dependencies and remove known vulnerabilities before deployment work proceeds.",
+      "requirements": "Upgrade vulnerable dependencies to the minimum patched version. If a CVE fix requires a major version upgrade, document the affected dependency, the current version, the upgraded major version, and the breaking change risk. Verify that the project builds and all tests pass after remediation.",
+      "environmentConfiguration": "Runtime environment established by previous modernization tasks and the existing dotnet/MSBuild toolchain.",
+      "dependencies": [
+        "001-transform-cache-azure-redis",
+        "002-transform-appconfig-externalization"
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    }
+  ],
+  "metadata": {
+    "planName": "modernizationplan1",
+    "projectName": "Basket.API",
+    "language": "dotnet",
+    "createdAt": "2026-06-17T17:16:29.592+00:00",
+    "version": "1.0"
+  }
+}
